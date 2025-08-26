@@ -1,21 +1,21 @@
-[project]
+[tool.poetry]
 name = "llm-router-service"
 version = "0.1.0"
 description = "LLM router with councils and selectors"
-authors = [{name = "Unknown"}]
-dependencies = [
-    "tiktoken",
-    "textstat",
-    "promptlayer",
-    "litellm",
-    "python-dotenv",
-    "langchain-ollama",
-    "requests",
-    "pydantic",
-    "tqdm",
-]
+authors = ["Srihari Raman <sriharii@fyrassolutions.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+tiktoken = "*"
+textstat = "*"
+promptlayer = "*"
+litellm = "*"
+python-dotenv = "*"
+langchain-ollama = "*"
+requests = "*"
+pydantic = "*"
+tqdm = "*"
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
