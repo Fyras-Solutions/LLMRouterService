@@ -1,29 +1,39 @@
+import logging
 from typing import List, Dict, Any
+
+from tqdm import tqdm
+
 from llm_router.schemas.abstractions import Council, Selector
 from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
+from llm_router.exceptions.exceptions import CouncilError
+
+logger = logging.getLogger(__name__)
 
 
 class CascadeCouncil(Council):
-    """
-    A router that uses a cascade approach: selectors are queried in sequence
-    until one provides a confident model choice. If none do, it defaults
-    to a predefined model.
-    """
+    """Query selectors sequentially until one is confident."""
 
     def __init__(self, selectors: List[Selector], default_model: str):
         self.selectors = selectors
         self.default_model = default_model
 
-    def decide(self, prompt: str) -> CouncilDecision:
+    async def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
         final_model = self.default_model
 
-        for selector in self.selectors:
-            vote = selector.select_model(prompt)
+        for selector in tqdm(self.selectors, desc="Cascade selectors"):
+            try:
+                vote = await selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed in cascade", exc_info=exc)
+                continue
             votes.append(vote)
-            if vote.confidence > 0.7:  # Assuming confidence is a float between 0 and 1
+            if vote.confidence > 0.7:
                 final_model = vote.model
                 break
+
+        if not votes:
+            raise CouncilError("No valid selector votes collected")
 
         weighted_results = {vote.model: vote.confidence for vote in votes}
 
@@ -31,5 +41,5 @@ class CascadeCouncil(Council):
             final_model=final_model,
             votes=votes,
             weighted_results=weighted_results,
-            metadata={"prompt_length": str(len(prompt.split()))}
+            metadata={"prompt_length": str(len(prompt.split()))},
         )

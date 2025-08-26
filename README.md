@@ -24,20 +24,21 @@ graph TD
 - **Files:**
   - `random.py`: Randomized council decision logic.
   - `iterative.py`: Iterative voting and selection.
-  - `weighted.py`: Weighted voting and aggregation.
+  - `weighted.py`: Weighted and unanimous voting.
+  - `parallel.py`: Runs selectors concurrently and chooses the majority model.
 
 ### Selectors (`llm_router/selectors/`)
 - **Purpose:** Implement model selection strategies (heuristics, classifiers, SLMs).
 - **Files:**
-  - `classifier.py`: Classifier-based selection.
+  - `classifier.py`: HuggingFace zero-shot classifier.
   - `heuristics.py`: Heuristic-based selection.
-  - `slm.py`: SLM-based selection.
+  - `slm.py`: Small language model selector.
+  - `length_selector.py`: Simple prompt-length based selector.
 
 ### Routers (`llm_router/routers/`)
 - **Purpose:** Main service interface for routing requests, executing LLM calls, and logging.
 - **Files:**
-  - `router.py`: Core router service logic.
-  - `prompt_templates.py`: Prompt template wrappers for logging.
+  - `router.py`: Asynchronous router service with PromptLayer logging.
 
 ### Schemas (`llm_router/schemas/`)
 - **Purpose:** Define data contracts for council decisions, LLM responses, and metadata.
@@ -48,7 +49,7 @@ graph TD
 ### Exceptions (`llm_router/exceptions/`)
 - **Purpose:** Custom exception handling for router and council logic.
 - **Files:**
-  - `exceptions.py`: Exception definitions.
+  - `exceptions.py`: Exception definitions and hierarchy.
 
 ## API Contracts
 
@@ -123,12 +124,13 @@ class CouncilDecision(BaseModel):
 
 1. **Install dependencies:**
    ```bash
-   poetry install
+   pip install -e .
    ```
 2. **Configure environment:**
    - Set your LLM API keys in `.env`.
 3. **Run the service:**
-   - Import and use `LLMRouterService` in your application.
+   - Use `asyncio.run` with `LLMRouterService.invoke` for non-blocking execution.
+   - Progress bars are displayed via `tqdm` and logging is emitted with Python's `logging` module.
 
 ## Extending
 - Add new selectors or councils by implementing the appropriate base classes in `schemas/abstractions.py`.
