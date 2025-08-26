@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from llm_router.schemas.council_schemas import SelectorVote
 from llm_router.exceptions.exceptions import SelectorError
@@ -32,9 +31,9 @@ class PromptLengthSelector:
             rationale=f"Prompt length {length} exceeds thresholds",
         )
 
-    async def select_model(self, prompt: str) -> SelectorVote:
+    def select_model(self, prompt: str) -> SelectorVote:
         try:
-            return await asyncio.to_thread(self._select_sync, prompt)
+            return self._select_sync(prompt)
         except Exception as exc:  # pragma: no cover - protective
             logger.exception("PromptLengthSelector failed")
             raise SelectorError(str(exc)) from exc

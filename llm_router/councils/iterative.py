@@ -17,13 +17,13 @@ class CascadeCouncil(Council):
         self.selectors = selectors
         self.default_model = default_model
 
-    async def decide(self, prompt: str) -> CouncilDecision:
+    def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
         final_model = self.default_model
 
         for selector in tqdm(self.selectors, desc="Cascade selectors"):
             try:
-                vote = await selector.select_model(prompt)
+                vote = selector.select_model(prompt)
             except Exception as exc:
                 logger.exception("Selector failed in cascade", exc_info=exc)
                 continue

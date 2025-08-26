@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -29,14 +28,13 @@ class LLMRouterService:
 
         self.pl_client = promptlayer.PromptLayer(api_key=api_key)
 
-    async def _execute(self, decision: CouncilDecision, prompt: str) -> LLMRouterResponse:
+    def _execute(self, decision: CouncilDecision, prompt: str) -> LLMRouterResponse:
         """Execute call through LiteLLM and log with PromptLayer."""
         model = decision.final_model
 
         try:
             start = time.time()
-            resp = await asyncio.to_thread(
-                completion,
+            resp = completion(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -108,13 +106,13 @@ class LLMRouterService:
             metadata=router_metadata,
         )
 
-    async def invoke(self, prompt: str) -> LLMRouterResponse:
+    def invoke(self, prompt: str) -> LLMRouterResponse:
         """Main entry point: ask council to decide, then execute."""
         try:
-            decision = await self.council.decide(prompt)
+            decision = self.council.decide(prompt)
         except Exception as exc:  # pragma: no cover - protective
             logger.exception("Council decision failed")
             raise RouterError(str(exc)) from exc
 
-        return await self._execute(decision, prompt)
+        return self._execute(decision, prompt)
 

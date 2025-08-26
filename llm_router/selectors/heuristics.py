@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 import tiktoken
@@ -48,9 +47,9 @@ class HeuristicsSelector:
             rationale="Long/complex prompt",
         )
 
-    async def select_model(self, prompt: str) -> SelectorVote:
+    def select_model(self, prompt: str) -> SelectorVote:
         try:
-            return await asyncio.to_thread(self._select_sync, prompt)
+            return self._select_sync(prompt)
         except Exception as exc:  # pragma: no cover - protective
             logger.exception("HeuristicsSelector failed")
             raise SelectorError(str(exc)) from exc

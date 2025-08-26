@@ -7,7 +7,7 @@ from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
 class Selector(Protocol):
     """Base abstraction for all Selectors."""
 
-    async def select_model(self, prompt: str) -> SelectorVote:
+    def select_model(self, prompt: str) -> SelectorVote:
         ...
 
 
@@ -15,6 +15,6 @@ class Selector(Protocol):
 class Council(Protocol):
     """Base abstraction for all Councils."""
 
-    async def decide(self, prompt: str) -> CouncilDecision:
+    def decide(self, prompt: str) -> CouncilDecision:
         ...
 

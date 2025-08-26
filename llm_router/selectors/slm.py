@@ -26,11 +26,11 @@ class SLMSelector:
             """
         )
 
-    async def select_model(self, prompt: str) -> SelectorVote:
+    def select_model(self, prompt: str) -> SelectorVote:
         chat = ChatOllama(model=self.model, temperature=0, num_predict=50)
         full_prompt = f"{self.selector_prompt}\n\nUser Prompt:\n{prompt}\n\nSelected Model:"
         try:
-            resp = await chat.ainvoke(full_prompt)
+            resp = chat.invoke(full_prompt)
         except Exception as exc:  # pragma: no cover - protective
             logger.exception("SLMSelector failed")
             raise SelectorError(str(exc)) from exc

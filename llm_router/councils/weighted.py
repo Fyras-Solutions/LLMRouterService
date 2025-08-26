@@ -1,8 +1,8 @@
-import asyncio
+import logging
 import logging
 from typing import List, Dict, Optional
 
-from tqdm.asyncio import tqdm_asyncio
+from tqdm import tqdm
 
 from llm_router.schemas.abstractions import Council, Selector
 from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
@@ -18,16 +18,15 @@ class WeightedMajorityVoteCouncil(Council):
         self.selectors = selectors
         self.weights = weights if weights else {s.__class__.__name__: 1.0 for s in selectors}
 
-    async def decide(self, prompt: str) -> CouncilDecision:
-        tasks = [selector.select_model(prompt) for selector in self.selectors]
-        raw_votes = await tqdm_asyncio.gather(*tasks, desc="Selector votes", return_exceptions=True)
-
+    def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
         weighted_results: Dict[str, float] = {}
 
-        for result in raw_votes:
-            if isinstance(result, Exception):
-                logger.exception("Selector failed during voting", exc_info=result)
+        for selector in tqdm(self.selectors, desc="Selector votes"):
+            try:
+                result = selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed during voting", exc_info=exc)
                 continue
             weight = self.weights.get(result.selector_name, 1.0)
             result.weight = weight
@@ -54,16 +53,15 @@ class UnanimousCouncil(Council):
         self.selectors = selectors
         self.default_model = default_model
 
-    async def decide(self, prompt: str) -> CouncilDecision:
-        tasks = [selector.select_model(prompt) for selector in self.selectors]
-        raw_votes = await tqdm_asyncio.gather(*tasks, desc="Selector votes", return_exceptions=True)
-
+    def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
         model_votes: Dict[str, int] = {}
 
-        for result in raw_votes:
-            if isinstance(result, Exception):
-                logger.exception("Selector failed during voting", exc_info=result)
+        for selector in tqdm(self.selectors, desc="Selector votes"):
+            try:
+                result = selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed during voting", exc_info=exc)
                 continue
             votes.append(result)
             model_votes[result.model] = model_votes.get(result.model, 0) + 1

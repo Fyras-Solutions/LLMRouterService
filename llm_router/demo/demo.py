@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from llm_router.councils.parallel import ParallelCouncil
@@ -10,7 +9,7 @@ from llm_router.routers.router import LLMRouterService
 from llm_router.schemas.council_schemas import LLMRouterResponse
 
 
-async def main() -> None:
+def main() -> None:
     selectors = [
         HeuristicsSelector(),
         PromptLengthSelector(),
@@ -21,7 +20,7 @@ async def main() -> None:
     router_service = LLMRouterService(council=council)
 
     prompt = "What is the capital of France?"
-    response: LLMRouterResponse = await router_service.invoke(prompt)
+    response: LLMRouterResponse = router_service.invoke(prompt)
 
     print("Model:", response.model)
     print("Prompt:", response.prompt)
@@ -37,5 +36,5 @@ async def main() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
+    main()
 

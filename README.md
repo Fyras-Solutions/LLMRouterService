@@ -25,7 +25,7 @@ graph TD
   - `random.py`: Randomized council decision logic.
   - `iterative.py`: Iterative voting and selection.
   - `weighted.py`: Weighted and unanimous voting.
-  - `parallel.py`: Runs selectors concurrently and chooses the majority model.
+  - `parallel.py`: Queries selectors and chooses the majority model.
 
 ### Selectors (`llm_router/selectors/`)
 - **Purpose:** Implement model selection strategies (heuristics, classifiers, SLMs).
@@ -38,7 +38,7 @@ graph TD
 ### Routers (`llm_router/routers/`)
 - **Purpose:** Main service interface for routing requests, executing LLM calls, and logging.
 - **Files:**
-  - `router.py`: Asynchronous router service with PromptLayer logging.
+  - `router.py`: Router service with PromptLayer logging.
 
 ### Schemas (`llm_router/schemas/`)
 - **Purpose:** Define data contracts for council decisions, LLM responses, and metadata.
@@ -129,7 +129,7 @@ class CouncilDecision(BaseModel):
 2. **Configure environment:**
    - Set your LLM API keys in `.env`.
 3. **Run the service:**
-   - Use `asyncio.run` with `LLMRouterService.invoke` for non-blocking execution.
+   - Call `LLMRouterService.invoke` with your prompt to route and execute a request.
    - Progress bars are displayed via `tqdm` and logging is emitted with Python's `logging` module.
 
 ## Extending

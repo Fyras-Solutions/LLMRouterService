@@ -2,7 +2,7 @@ import logging
 import random
 from typing import List
 
-from tqdm.asyncio import tqdm_asyncio
+from tqdm import tqdm
 
 from llm_router.schemas.abstractions import Council, Selector
 from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
@@ -18,16 +18,15 @@ class RandomCouncil(Council):
         self.selectors = selectors
         self.random = random.Random()
 
-    async def decide(self, prompt: str) -> CouncilDecision:
-        tasks = [selector.select_model(prompt) for selector in self.selectors]
-        raw_votes = await tqdm_asyncio.gather(*tasks, desc="Selector votes", return_exceptions=True)
-
+    def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
-        for result in raw_votes:
-            if isinstance(result, Exception):
-                logger.exception("Selector failed during voting", exc_info=result)
+        for selector in tqdm(self.selectors, desc="Selector votes"):
+            try:
+                vote = selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed during voting", exc_info=exc)
                 continue
-            votes.append(result)
+            votes.append(vote)
 
         if not votes:
             raise CouncilError("No valid selector votes collected")

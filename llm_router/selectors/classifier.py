@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from typing import Any
@@ -15,14 +14,13 @@ logger = logging.getLogger(__name__)
 class HFZeroShotSelector:
     """Selector that queries a HuggingFace zero-shot classifier."""
 
-    async def select_model(self, prompt: str) -> SelectorVote:
+    def select_model(self, prompt: str) -> SelectorVote:
         payload: dict[str, Any] = {
             "inputs": prompt,
             "parameters": {"candidate_labels": CANDIDATE_LABELS},
         }
         try:
-            resp = await asyncio.to_thread(
-                requests.post,
+            resp = requests.post(
                 HF_API_URL,
                 headers=HF_HEADERS,
                 json=payload,
