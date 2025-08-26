@@ -6,13 +6,13 @@ from pydantic import BaseModel
 # Core Data Structures
 # ---------------------------------------------------------
 class SelectorVote(BaseModel):
-    """
-    A single vote cast by a Selector.
-    """
+    """A single vote cast by a Selector."""
+
     selector_name: str               # e.g. "HeuristicsSelector"
     model: str                       # the model chosen by this selector
     weight: float = 1.0              # weight applied during aggregation
     rationale: Optional[str] = None  # optional explanation for traceability
+    confidence: float = 1.0          # selector's confidence in its vote
 
 
 class CouncilDecision(BaseModel):

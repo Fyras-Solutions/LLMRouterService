@@ -1,10 +1,21 @@
+import json
+import logging
+import os
 import time
-import json, os
+
 import promptlayer
-from litellm import completion, cost_per_token
-from llm_router.schemas.council_schemas import LLMRouterResponse, RouterMetadata, CouncilDecision
-from llm_router.schemas.abstractions import Council
 from dotenv import load_dotenv
+from litellm import completion, cost_per_token
+
+from llm_router.schemas.abstractions import Council
+from llm_router.schemas.council_schemas import (
+    CouncilDecision,
+    LLMRouterResponse,
+    RouterMetadata,
+)
+from llm_router.exceptions.exceptions import ModelExecutionError, RouterError
+
+logger = logging.getLogger(__name__)
 
 
 class LLMRouterService:
@@ -18,26 +29,31 @@ class LLMRouterService:
         self.pl_client = promptlayer.PromptLayer(api_key=api_key)
 
     def _execute(self, decision: CouncilDecision, prompt: str) -> LLMRouterResponse:
-        """Execute call through LiteLLM + log with PromptLayer"""
+        """Execute call through LiteLLM and log with PromptLayer."""
         model = decision.final_model
 
-        start = time.time()
-        resp = completion(
-            model=model,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        end = time.time()
+        try:
+            start = time.time()
+            resp = completion(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            end = time.time()
+        except Exception as exc:  # pragma: no cover - network issues
+            logger.exception("Model execution failed")
+            raise ModelExecutionError(str(exc)) from exc
 
         # Cost tracking (safe fallback for Ollama)
         try:
             cost = cost_per_token(
                 model=model,
                 prompt_tokens=resp.usage.prompt_tokens,
-                completion_tokens=resp.usage.completion_tokens
+                completion_tokens=resp.usage.completion_tokens,
             )
             if isinstance(cost, tuple) and cost:
                 cost = float(cost[0])
-        except Exception:
+        except Exception as exc:  # pragma: no cover - protective
+            logger.warning("Cost calculation failed: %s", exc)
             cost = 0.0
 
         response_text = resp["choices"][0]["message"]["content"]
@@ -47,35 +63,38 @@ class LLMRouterService:
             "content": [{"type": "text", "text": prompt}],
             "input_variables": [],
             "template_format": "f-string",
-            "type": "completion"
+            "type": "completion",
         }
         response_struct = {
             "content": [{"type": "text", "text": response_text}],
             "input_variables": [],
             "template_format": "f-string",
-            "type": "completion"
+            "type": "completion",
         }
 
-        self.pl_client.log_request(
-            provider="ollama",
-            model=model,
-            input=prompt_struct,
-            output=response_struct,
-            request_start_time=start,
-            request_end_time=end,
-            parameters={},
-            tags=["council-router", "local-llm"],
-            metadata={
-                "votes": json.dumps([v.model_dump() for v in decision.votes]),
-                "weighted_results": json.dumps(decision.weighted_results),
-            },
-            function_name="LLMRouterService._execute",
-        )
+        try:
+            self.pl_client.log_request(
+                provider="ollama",
+                model=model,
+                input=prompt_struct,
+                output=response_struct,
+                request_start_time=start,
+                request_end_time=end,
+                parameters={},
+                tags=["council-router", "local-llm"],
+                metadata={
+                    "votes": json.dumps([v.model_dump() for v in decision.votes]),
+                    "weighted_results": json.dumps(decision.weighted_results),
+                },
+                function_name="LLMRouterService._execute",
+            )
+        except Exception as exc:  # pragma: no cover - logging shouldn't break flow
+            logger.warning("PromptLayer logging failed: %s", exc)
 
         router_metadata = RouterMetadata(
             votes=[v.model_dump() for v in decision.votes],
             weighted_results=decision.weighted_results,
-            tags=["council-router", "local-llm"]
+            tags=["council-router", "local-llm"],
         )
 
         return LLMRouterResponse(
@@ -84,10 +103,16 @@ class LLMRouterService:
             response=response_text,
             cost=cost,
             latency=end - start,
-            metadata=router_metadata
+            metadata=router_metadata,
         )
 
     def invoke(self, prompt: str) -> LLMRouterResponse:
-        """Main entry point: ask council to decide, then execute"""
-        decision = self.council.decide(prompt)
+        """Main entry point: ask council to decide, then execute."""
+        try:
+            decision = self.council.decide(prompt)
+        except Exception as exc:  # pragma: no cover - protective
+            logger.exception("Council decision failed")
+            raise RouterError(str(exc)) from exc
+
         return self._execute(decision, prompt)
+

@@ -1,13 +1,18 @@
+import logging
+import logging
 from typing import List, Dict, Optional
+
+from tqdm import tqdm
+
 from llm_router.schemas.abstractions import Council, Selector
 from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
+from llm_router.exceptions.exceptions import CouncilError
+
+logger = logging.getLogger(__name__)
 
 
 class WeightedMajorityVoteCouncil(Council):
-    """
-    A hybrid router that aggregates multiple selectors' votes
-    and decides the final model via weighted majority voting.
-    """
+    """Aggregate votes via weighted majority and return the winning model."""
 
     def __init__(self, selectors: List[Selector], weights: Optional[Dict[str, float]] = None):
         self.selectors = selectors
@@ -17,12 +22,19 @@ class WeightedMajorityVoteCouncil(Council):
         votes: List[SelectorVote] = []
         weighted_results: Dict[str, float] = {}
 
-        for selector in self.selectors:
-            vote = selector.select_model(prompt)
-            weight = self.weights.get(vote.selector_name, 1.0)
-            vote.weight = weight
-            votes.append(vote)
-            weighted_results[vote.model] = weighted_results.get(vote.model, 0.0) + weight
+        for selector in tqdm(self.selectors, desc="Selector votes"):
+            try:
+                result = selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed during voting", exc_info=exc)
+                continue
+            weight = self.weights.get(result.selector_name, 1.0)
+            result.weight = weight
+            votes.append(result)
+            weighted_results[result.model] = weighted_results.get(result.model, 0.0) + weight
+
+        if not weighted_results:
+            raise CouncilError("No valid selector votes collected")
 
         final_model = max(weighted_results, key=weighted_results.get)
 
@@ -30,16 +42,12 @@ class WeightedMajorityVoteCouncil(Council):
             final_model=final_model,
             votes=votes,
             weighted_results=weighted_results,
-            metadata={"prompt_length": str(len(prompt.split()))}
+            metadata={"prompt_length": str(len(prompt.split()))},
         )
 
 
 class UnanimousCouncil(Council):
-    """
-    A router that requires unanimous agreement among selectors
-    to choose a model. If no unanimous decision is reached,
-    it defaults to a predefined model.
-    """
+    """Require unanimous agreement among selectors, otherwise use a default model."""
 
     def __init__(self, selectors: List[Selector], default_model: str):
         self.selectors = selectors
@@ -49,10 +57,17 @@ class UnanimousCouncil(Council):
         votes: List[SelectorVote] = []
         model_votes: Dict[str, int] = {}
 
-        for selector in self.selectors:
-            vote = selector.select_model(prompt)
-            votes.append(vote)
-            model_votes[vote.model] = model_votes.get(vote.model, 0) + 1
+        for selector in tqdm(self.selectors, desc="Selector votes"):
+            try:
+                result = selector.select_model(prompt)
+            except Exception as exc:
+                logger.exception("Selector failed during voting", exc_info=exc)
+                continue
+            votes.append(result)
+            model_votes[result.model] = model_votes.get(result.model, 0) + 1
+
+        if not votes:
+            raise CouncilError("No valid selector votes collected")
 
         unanimous_model = None
         for model, count in model_votes.items():
@@ -66,5 +81,5 @@ class UnanimousCouncil(Council):
             final_model=final_model,
             votes=votes,
             weighted_results=model_votes,
-            metadata={"prompt_length": str(len(prompt.split()))}
+            metadata={"prompt_length": str(len(prompt.split()))},
         )
