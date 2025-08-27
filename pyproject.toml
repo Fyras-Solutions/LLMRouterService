@@ -1,8 +1,21 @@
 [tool.poetry]
 name = "llm-router-service"
 version = "0.1.0"
-description = "LLM router with councils and selectors"
+description = "LLM router with councils and selectors for intelligent model selection"
 authors = ["Srihari Raman <sriharii@fyrassolutions.com>"]
+readme = "README.md"
+packages = [{include = "llm_router"}]
+license = "MIT"
+repository = "https://github.com/Fyras-Solutions-Org/LLMRouterService"
+keywords = ["llm", "router", "ai", "model-selection"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,7 +28,6 @@ langchain-ollama = "*"
 requests = "*"
 pydantic = "*"
 tqdm = "*"
-pytest = "^8.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
@@ -23,11 +35,9 @@ pytest-cov = "^4.1.0"
 pytest-mock = "^3.11.1"
 responses = "^0.24.1"
 
-[tool.pytest.ini_options]
-testpaths = ["llm_router/tests"]
-python_files = ["test_*.py"]
-addopts = "-v --cov=llm_router --cov-report=term-missing"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/Fyras-Solutions-Org/LLMRouterService/issues"
