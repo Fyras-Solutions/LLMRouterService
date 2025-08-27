@@ -15,6 +15,18 @@ langchain-ollama = "*"
 requests = "*"
 pydantic = "*"
 tqdm = "*"
+pytest = "^8.4.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.11.1"
+responses = "^0.24.1"
+
+[tool.pytest.ini_options]
+testpaths = ["llm_router/tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=llm_router --cov-report=term-missing"
 
 [build-system]
 requires = ["poetry-core"]

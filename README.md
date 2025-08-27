@@ -136,6 +136,10 @@ class CouncilDecision(BaseModel):
 - Add new selectors or councils by implementing the appropriate base classes in `schemas/abstractions.py`.
 - Customize routing logic in `routers/router.py`.
 
+## Testing
+- Unit tests are located in the `tests/` directory.
+- See `COVERAGE.md` for last written coverage reports.
+
 ## License
 MIT
 
