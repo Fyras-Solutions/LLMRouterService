@@ -5,7 +5,12 @@ from typing import Any
 import requests
 
 from llm_router.schemas.council_schemas import SelectorVote
-from llm_router.schemas.config import CANDIDATE_LABELS, HF_HEADERS, HF_API_URL, TOPIC_TO_MODEL
+from llm_router.schemas.config import (
+    CANDIDATE_LABELS,
+    HF_API_URL,
+    TOPIC_TO_MODEL,
+    get_hf_headers,
+)
 from llm_router.exceptions.exceptions import SelectorError
 
 logger = logging.getLogger(__name__)
@@ -22,7 +27,7 @@ class HFZeroShotSelector:
         try:
             resp = requests.post(
                 HF_API_URL,
-                headers=HF_HEADERS,
+                headers=get_hf_headers(),
                 json=payload,
                 timeout=30,
             )
