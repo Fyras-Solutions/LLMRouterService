@@ -33,7 +33,6 @@ graph TD
   - `classifier.py`: HuggingFace zero-shot classifier.
   - `heuristics.py`: Heuristic-based selection.
   - `slm.py`: Small language model selector.
-  - `length_selector.py`: Simple prompt-length based selector.
 
 ### Routers (`llm_router/routers/`)
 - **Purpose:** Main service interface for routing requests, executing LLM calls, and logging.

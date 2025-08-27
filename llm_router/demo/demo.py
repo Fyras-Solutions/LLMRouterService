@@ -1,18 +1,27 @@
 import logging
+import os
+from pathlib import Path
 
 from llm_router.councils.parallel import ParallelCouncil
 from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.selectors.classifier import HFZeroShotSelector
 from llm_router.selectors.slm import SLMSelector
-from llm_router.selectors.length_selector import PromptLengthSelector
 from llm_router.routers.router import LLMRouterService
 from llm_router.schemas.council_schemas import LLMRouterResponse
+from dotenv import load_dotenv
 
+# Get the project root directory (2 levels up from this file)
+ROOT_DIR = Path(__file__).parent.parent.parent
+ENV_PATH = ROOT_DIR / '.env'
+
+print(ENV_PATH)
+
+# Load the .env file from the project root
+load_dotenv(dotenv_path=ENV_PATH)
 
 def main() -> None:
     selectors = [
         HeuristicsSelector(),
-        PromptLengthSelector(),
         HFZeroShotSelector(),
         SLMSelector(),
     ]
@@ -37,4 +46,3 @@ def main() -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     main()
-

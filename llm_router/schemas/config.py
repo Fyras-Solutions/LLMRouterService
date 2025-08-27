@@ -1,10 +1,13 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
+from llm_router.schemas.env_validator import get_env_var, validate_env_vars
+
+# Validate environment variables at import time
+validate_env_vars()
 
 # Hugging Face API Setup
 HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
-HF_HEADERS = {"Authorization": f"Bearer {os.getenv('HF_API_KEY')}"}
+HF_HEADERS = {"Authorization": f"Bearer {get_env_var('HF_API_KEY')}"}
 
 # Router configs
 CANDIDATE_LABELS = ["simple", "general", "complex", "code", "math"]
