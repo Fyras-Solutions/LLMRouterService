@@ -1,5 +1,7 @@
 import pytest
+from pathlib import Path
 from unittest.mock import Mock, patch
+
 from llm_router.routers.router import LLMRouterService
 from llm_router.councils.random import RandomCouncil
 from llm_router.selectors.heuristics import HeuristicsSelector
@@ -14,10 +16,17 @@ def mock_completion():
     return mock_resp
 
 @pytest.fixture
-def router_service():
+def env_file(tmp_path) -> Path:
+    file = tmp_path / ".env"
+    file.write_text("HF_API_KEY=test\nPROMPTLAYER_API_KEY=test\n")
+    return file
+
+
+@pytest.fixture
+def router_service(env_file):
     selector = HeuristicsSelector()
     council = RandomCouncil(selectors=[selector])
-    return LLMRouterService(council=council)
+    return LLMRouterService(council=council, env_path=env_file)
 
 @patch('llm_router.routers.router.completion')
 @patch('llm_router.routers.router.cost_per_token')
@@ -47,16 +56,16 @@ def test_router_service_error_handling(mock_completion_func, router_service):
     with pytest.raises(Exception):
         router_service.invoke("Test prompt")
 
-def test_router_service_initialization():
+def test_router_service_initialization(env_file):
     """Test LLMRouterService initialization with different configurations"""
     # Test with custom API key
     selector = HeuristicsSelector()
     council = RandomCouncil(selectors=[selector])
-    service = LLMRouterService(council=council, api_key="test_key")
+    service = LLMRouterService(council=council, api_key="test_key", env_path=env_file)
     assert service.council == council
 
     # Test without API key (should use environment variable)
-    service_no_key = LLMRouterService(council=council)
+    service_no_key = LLMRouterService(council=council, env_path=env_file)
     assert service_no_key.council == council
 
 @patch('llm_router.routers.router.completion')

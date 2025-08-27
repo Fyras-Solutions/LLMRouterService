@@ -1,12 +1,11 @@
+from __future__ import annotations
 import json
 import logging
-import os
 import time
-
 import promptlayer
-from dotenv import load_dotenv
+import threading
+from pathlib import Path
 from litellm import completion, cost_per_token
-
 from llm_router.schemas.abstractions import Council
 from llm_router.schemas.council_schemas import (
     CouncilDecision,
@@ -15,30 +14,37 @@ from llm_router.schemas.council_schemas import (
 )
 from llm_router.exceptions.exceptions import ModelExecutionError, RouterError
 from llm_router.schemas.env_validator import validate_env_vars, get_env_var
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class LLMRouterService:
-    def __init__(self, council: Council, api_key: str = None):
-        """
-        Initialize the LLM Router Service.
+    def __init__(
+        self,
+        council: Council,
+        api_key: str | None = None,
+        env_path: Optional[Path] = None,
+    ):
+        """Initialize the LLM Router Service.
 
         Args:
-            council: The council implementation to use for decision making
-            api_key: Optional PromptLayer API key. If not provided, will look for PROMPTLAYER_API_KEY in environment
+            council: The council implementation to use for decision making.
+            api_key: Optional PromptLayer API key. If not provided, will look for
+                ``PROMPTLAYER_API_KEY`` in the environment.
+            env_path: Optional path to a ``.env`` file to load required variables.
 
         Raises:
-            EnvVarError: If required environment variables are missing
+            EnvVarError: If required environment variables are missing.
         """
         self.council = council
 
         # Validate all required environment variables
-        validate_env_vars()
+        validate_env_vars(env_path)
 
         # If no API key provided, get from validated environment
         if not api_key:
-            api_key = get_env_var("PROMPTLAYER_API_KEY")
+            api_key = get_env_var("PROMPTLAYER_API_KEY", env_path)
 
         self.pl_client = promptlayer.PromptLayer(api_key=api_key)
 
@@ -86,24 +92,27 @@ class LLMRouterService:
             "type": "completion",
         }
 
-        try:
-            self.pl_client.log_request(
-                provider="ollama",
-                model=model,
-                input=prompt_struct,
-                output=response_struct,
-                request_start_time=start,
-                request_end_time=end,
-                parameters={},
-                tags=["council-router", "local-llm"],
-                metadata={
-                    "votes": json.dumps([v.model_dump() for v in decision.votes]),
-                    "weighted_results": json.dumps(decision.weighted_results),
-                },
-                function_name="LLMRouterService._execute",
-            )
-        except Exception as exc:  # pragma: no cover - logging shouldn't break flow
-            logger.warning("PromptLayer logging failed: %s", exc)
+        def log_promptlayer() -> None:
+            try:
+                self.pl_client.log_request(
+                    provider="ollama",
+                    model=model,
+                    input=prompt_struct,
+                    output=response_struct,
+                    request_start_time=start,
+                    request_end_time=end,
+                    parameters={},
+                    tags=["council-router", "local-llm"],
+                    metadata={
+                        "votes": json.dumps([v.model_dump() for v in decision.votes]),
+                        "weighted_results": json.dumps(decision.weighted_results),
+                    },
+                    function_name="LLMRouterService._execute",
+                )
+            except Exception as exc:  # pragma: no cover - logging shouldn't block flow
+                logger.warning("PromptLayer logging failed: %s", exc)
+
+        threading.Thread(target=log_promptlayer, daemon=True).start()
 
         router_metadata = RouterMetadata(
             votes=[v.model_dump() for v in decision.votes],
