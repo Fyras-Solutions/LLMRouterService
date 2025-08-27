@@ -3,6 +3,7 @@ import logging
 import time
 
 import promptlayer
+import threading
 from pathlib import Path
 from litellm import completion, cost_per_token
 
@@ -91,24 +92,27 @@ class LLMRouterService:
             "type": "completion",
         }
 
-        try:
-            self.pl_client.log_request(
-                provider="ollama",
-                model=model,
-                input=prompt_struct,
-                output=response_struct,
-                request_start_time=start,
-                request_end_time=end,
-                parameters={},
-                tags=["council-router", "local-llm"],
-                metadata={
-                    "votes": json.dumps([v.model_dump() for v in decision.votes]),
-                    "weighted_results": json.dumps(decision.weighted_results),
-                },
-                function_name="LLMRouterService._execute",
-            )
-        except Exception as exc:  # pragma: no cover - logging shouldn't break flow
-            logger.warning("PromptLayer logging failed: %s", exc)
+        def log_promptlayer() -> None:
+            try:
+                self.pl_client.log_request(
+                    provider="ollama",
+                    model=model,
+                    input=prompt_struct,
+                    output=response_struct,
+                    request_start_time=start,
+                    request_end_time=end,
+                    parameters={},
+                    tags=["council-router", "local-llm"],
+                    metadata={
+                        "votes": json.dumps([v.model_dump() for v in decision.votes]),
+                        "weighted_results": json.dumps(decision.weighted_results),
+                    },
+                    function_name="LLMRouterService._execute",
+                )
+            except Exception as exc:  # pragma: no cover - logging shouldn't block flow
+                logger.warning("PromptLayer logging failed: %s", exc)
+
+        threading.Thread(target=log_promptlayer, daemon=True).start()
 
         router_metadata = RouterMetadata(
             votes=[v.model_dump() for v in decision.votes],
