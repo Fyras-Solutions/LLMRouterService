@@ -1,5 +1,3 @@
-import os
-from dotenv import load_dotenv
 from llm_router.schemas.env_validator import get_env_var, validate_env_vars
 
 # Validate environment variables at import time

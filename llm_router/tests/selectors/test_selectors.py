@@ -1,12 +1,16 @@
 import pytest
 import responses
-from llm_router.selectors.classifier import HFZeroShotSelector
+
 from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.exceptions.exceptions import SelectorError
 
 # Test HFZeroShotSelector
 @pytest.fixture
-def hf_selector():
+def hf_selector(monkeypatch):
+    monkeypatch.setenv("HF_API_KEY", "test")
+    monkeypatch.setenv("PROMPTLAYER_API_KEY", "test")
+    from llm_router.selectors.classifier import HFZeroShotSelector
+
     return HFZeroShotSelector()
 
 @responses.activate
