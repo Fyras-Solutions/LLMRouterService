@@ -1,12 +1,11 @@
+from __future__ import annotations
 import json
 import logging
 import time
-
 import promptlayer
 import threading
 from pathlib import Path
 from litellm import completion, cost_per_token
-
 from llm_router.schemas.abstractions import Council
 from llm_router.schemas.council_schemas import (
     CouncilDecision,
@@ -15,6 +14,7 @@ from llm_router.schemas.council_schemas import (
 )
 from llm_router.exceptions.exceptions import ModelExecutionError, RouterError
 from llm_router.schemas.env_validator import validate_env_vars, get_env_var
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class LLMRouterService:
         self,
         council: Council,
         api_key: str | None = None,
-        env_path: Path | None = None,
+        env_path: Optional[Path] = None,
     ):
         """Initialize the LLM Router Service.
 

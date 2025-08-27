@@ -1,12 +1,14 @@
 """Static configuration and helpers for selectors."""
-
+from __future__ import annotations
 import os
+
+from typing import Dict
 
 # Hugging Face API Setup
 HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
 
 
-def get_hf_headers() -> dict[str, str]:
+def get_hf_headers() -> Dict[str, str]:
     """Build authorization headers for HuggingFace requests.
 
     The router validates required environment variables on startup, so here we
@@ -17,6 +19,7 @@ def get_hf_headers() -> dict[str, str]:
 
     api_key = os.getenv("HF_API_KEY", "")
     return {"Authorization": f"Bearer {api_key}"} if api_key else {}
+
 
 # Router configs
 CANDIDATE_LABELS = ["simple", "general", "complex", "code", "math"]
