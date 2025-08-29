@@ -15,7 +15,9 @@ def mock_completion():
 @pytest.fixture
 def env_file(tmp_path) -> Path:
     file = tmp_path / ".env"
-    file.write_text("HF_API_KEY=test\nPROMPTLAYER_API_KEY=test\n")
+    file.write_text(
+        "HF_API_KEY=test\nPROMPTLAYER_API_KEY=test\nANTHROPIC_API_KEY=test\n"
+    )
     return file
 
 

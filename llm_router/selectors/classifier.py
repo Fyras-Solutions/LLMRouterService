@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 class HFZeroShotSelector:
     """Selector that queries a HuggingFace zero-shot classifier."""
 
+    def __init__(self, provider_name: str = "anthropic") -> None:
+        self.provider_name = provider_name
+
     def select_model(self, prompt: str) -> SelectorVote:
         payload: dict[str, Any] = {
             "inputs": prompt,
@@ -38,7 +41,7 @@ class HFZeroShotSelector:
         if resp.status_code != 200:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model="ollama/phi3:latest",
+                model=TOPIC_TO_MODEL["general"][self.provider_name],
                 rationale=f"HF API error status {resp.status_code}",
             )
 
@@ -48,13 +51,16 @@ class HFZeroShotSelector:
             logger.exception("HFZeroShotSelector JSON parse error")
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model="ollama/phi3:latest",
+                model=TOPIC_TO_MODEL["general"][self.provider_name],
                 rationale="Invalid JSON from HF API",
             )
 
         if "labels" in result:
             top_label = result["labels"][0]
-            mapped_model = TOPIC_TO_MODEL.get(top_label, "ollama/phi3:latest")
+            provider_models = TOPIC_TO_MODEL.get(top_label, {})
+            mapped_model = provider_models.get(
+                self.provider_name, TOPIC_TO_MODEL["general"][self.provider_name]
+            )
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=mapped_model,
@@ -63,6 +69,6 @@ class HFZeroShotSelector:
 
         return SelectorVote(
             selector_name=self.__class__.__name__,
-            model="ollama/phi3:latest",
+            model=TOPIC_TO_MODEL["general"][self.provider_name],
             rationale="Fallback default model",
         )

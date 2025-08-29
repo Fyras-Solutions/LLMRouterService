@@ -41,7 +41,7 @@ class LLMRouterService:
             EnvVarError: If required environment variables are missing.
         """
         self.council = council
-        self.provider = provider or AnthropicProvider()
+        self.provider = provider or AnthropicProvider(env_path=env_path)
 
         # Validate all required environment variables
         validate_env_vars(env_path)

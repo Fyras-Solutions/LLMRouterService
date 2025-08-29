@@ -1,3 +1,5 @@
+"""Provider implementation for OpenAI's GPT models."""
+
 from __future__ import annotations
 
 import logging
@@ -10,17 +12,17 @@ from .base import Provider, ProviderResponse
 logger = logging.getLogger(__name__)
 
 
-class AnthropicProvider(Provider):
-    """Provider implementation for Anthropic's Claude models."""
+class OpenAIProvider(Provider):
+    """Provider implementation for OpenAI's GPT family."""
 
-    api_key_env = "ANTHROPIC_API_KEY"
+    api_key_env = "OPENAI_API_KEY"
 
     @property
     def name(self) -> str:  # pragma: no cover - simple property
-        return "anthropic"
+        return "openai"
 
     def complete(self, model: str, prompt: str) -> ProviderResponse:
-        resp = completion(model=model, messages=[{"role": "user", "content": prompt}])
+        resp: Any = completion(model=model, messages=[{"role": "user", "content": prompt}])
         text = resp["choices"][0]["message"]["content"]
         usage = getattr(resp, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0)
@@ -40,3 +42,4 @@ class AnthropicProvider(Provider):
         except Exception as exc:  # pragma: no cover - protective
             logger.warning("Cost calculation failed: %s", exc)
             return 0.0
+

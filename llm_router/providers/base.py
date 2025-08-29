@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from llm_router.schemas.env_validator import EnvVarError
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +24,28 @@ class ProviderResponse:
 
 
 class Provider(ABC):
-    """Abstract base class for LLM providers."""
+    """Abstract base class for LLM providers.
+
+    Subclasses must define the ``api_key_env`` class attribute with the name of
+    the environment variable LiteLLM expects for authentication. During
+    initialization we optionally load variables from a ``.env`` file and ensure
+    the required key is present, raising a detailed :class:`EnvVarError` if not.
+    """
+
+    #: Name of the environment variable used for the provider API key
+    api_key_env: str
+
+    def __init__(self, env_path: Path | None = None) -> None:
+        self.env_path = env_path
+        if env_path:
+            load_dotenv(env_path)
+        key = os.getenv(self.api_key_env)
+        if not key:
+            raise EnvVarError(
+                f"Environment variable {self.api_key_env} is required for the"
+                f" {self.name} provider. Set it in your environment or .env"
+                f" file at {env_path}."
+            )
 
     @property
     @abstractmethod

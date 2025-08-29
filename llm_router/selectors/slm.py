@@ -11,20 +11,24 @@ logger = logging.getLogger(__name__)
 
 
 class SLMSelector:
-    def __init__(self, model: str = "gemma2:2b", prompt_template: Optional[str] = None):
+    def __init__(
+        self,
+        model: str = "gemma2:2b",
+        prompt_template: Optional[str] = None,
+        provider_name: str = "anthropic",
+    ):
         self.model = model
-        self.selector_prompt = prompt_template or (
-            """
-            You are a STRICT model selector. Choose exactly one from:
-            - ollama/gemma2:2b → very short/simple factual questions
-            - ollama/phi3:latest → general-purpose, moderate complexity
-            - ollama/mistral:7b → long/complex reasoning tasks
-            - ollama/qwen2.5-coder:latest → coding, programming, debugging
-            - ollama/qwen2-math:latest → math/calculus/algebra
-
-            Return only the model code.
-            """
-        )
+        self.provider_name = provider_name
+        if prompt_template:
+            self.selector_prompt = prompt_template
+        else:
+            lines = ["You are a STRICT model selector. Choose exactly one from:"]
+            for topic, models in TOPIC_TO_MODEL.items():
+                lines.append(
+                    f"- {models[provider_name]} → {topic} tasks"
+                )
+            lines.append("\nReturn only the model code.")
+            self.selector_prompt = "\n".join(lines)
 
     def select_model(self, prompt: str) -> SelectorVote:
         chat = ChatOllama(model=self.model, temperature=0, num_predict=50)
@@ -36,8 +40,9 @@ class SLMSelector:
             raise SelectorError(str(exc)) from exc
 
         selection = resp.content.strip()
-        if selection not in TOPIC_TO_MODEL.values():
-            selection = "ollama/phi3:latest"
+        allowed_models = [m[self.provider_name] for m in TOPIC_TO_MODEL.values()]
+        if selection not in allowed_models:
+            selection = TOPIC_TO_MODEL["general"][self.provider_name]
 
         return SelectorVote(
             selector_name=self.__class__.__name__,
