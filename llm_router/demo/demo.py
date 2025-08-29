@@ -3,7 +3,6 @@ from pathlib import Path
 from llm_router.councils.parallel import ParallelCouncil
 from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.selectors.classifier import HFZeroShotSelector
-from llm_router.selectors.slm import SLMSelector
 from llm_router.routers.router import LLMRouterService
 from llm_router.schemas.council_schemas import LLMRouterResponse
 from llm_router.providers import OpenAIProvider
@@ -15,9 +14,8 @@ ENV_PATH = ROOT_DIR / '.env'
 
 def main() -> None:
     selectors = [
-        HeuristicsSelector(provider_name="openai"),
-        HFZeroShotSelector(provider_name="openai"),
-        SLMSelector(provider_name="openai"),
+        HeuristicsSelector(provider_name="anthropic"),
+        HFZeroShotSelector(provider_name="anthropic"),
     ]
     council = ParallelCouncil(selectors=selectors, provider_name="openai")
 
