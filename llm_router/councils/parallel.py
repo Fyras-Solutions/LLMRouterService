@@ -1,11 +1,12 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from tqdm import tqdm
 
 from llm_router.schemas.abstractions import Council, Selector
 from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
 from llm_router.exceptions.exceptions import CouncilError
+from llm_router.schemas.config import TOPIC_TO_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +14,15 @@ logger = logging.getLogger(__name__)
 class ParallelCouncil(Council):
     """Run selectors and choose the majority model."""
 
-    def __init__(self, selectors: List[Selector], default_model: str = "ollama/phi3:latest"):
+    def __init__(
+        self,
+        selectors: List[Selector],
+        provider_name: str = "anthropic",
+        default_model: Optional[str] = None,
+    ) -> None:
         self.selectors = selectors
-        self.default_model = default_model
+        self.provider_name = provider_name
+        self.default_model = default_model or TOPIC_TO_MODEL["simple"][provider_name]
 
     def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []

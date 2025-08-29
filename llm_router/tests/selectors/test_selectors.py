@@ -3,6 +3,7 @@ import responses
 
 from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.exceptions.exceptions import SelectorError
+from llm_router.schemas.config import TOPIC_TO_MODEL
 
 # Test HFZeroShotSelector
 @pytest.fixture
@@ -19,12 +20,14 @@ def test_hf_selector_successful_classification(hf_selector):
     responses.add(
         responses.POST,
         "https://api-inference.huggingface.co/models/facebook/bart-large-mnli",
-        json={"labels": ["coding", "general", "math"], "scores": [0.8, 0.1, 0.1]},
-        status=200
+        json={"labels": ["code", "general", "math"], "scores": [0.8, 0.1, 0.1]},
+        status=200,
     )
 
-    result = hf_selector.select_model("Write a Python function with a Flask API to sort a list in reverse order.")
-    assert result.model == "ollama/qwen2.5-coder:latest"
+    result = hf_selector.select_model(
+        "Write a Python function with a Flask API to sort a list in reverse order."
+    )
+    assert result.model == TOPIC_TO_MODEL["code"]["anthropic"]
     assert "Zero-shot classified" in result.rationale
 
 @responses.activate
@@ -37,7 +40,7 @@ def test_hf_selector_api_error(hf_selector):
     )
 
     result = hf_selector.select_model("test prompt")
-    assert result.model == "ollama/phi3:latest"
+    assert result.model == TOPIC_TO_MODEL["simple"]["anthropic"]
     assert "HF API error status 500" in result.rationale
 
 @responses.activate
@@ -51,7 +54,7 @@ def test_hf_selector_invalid_json(hf_selector):
     )
 
     result = hf_selector.select_model("test prompt")
-    assert result.model == "ollama/phi3:latest"
+    assert result.model == TOPIC_TO_MODEL["simple"]["anthropic"]
     assert "Invalid JSON from HF API" in result.rationale
 
 # Test HeuristicsSelector
@@ -61,29 +64,29 @@ def heuristics_selector():
 
 def test_heuristics_code_related(heuristics_selector):
     result = heuristics_selector.select_model("Write a Python code to sort a list")
-    assert result.model == "ollama/qwen2.5-coder:latest"
+    assert result.model == TOPIC_TO_MODEL["code"]["anthropic"]
     assert "code-related" in result.rationale
 
 def test_heuristics_math_related(heuristics_selector):
     result = heuristics_selector.select_model("Solve this integral equation")
-    assert result.model == "ollama/qwen2-math:latest"
+    assert result.model == TOPIC_TO_MODEL["math"]["anthropic"]
     assert "math-related" in result.rationale
 
 def test_heuristics_short_simple(heuristics_selector):
     result = heuristics_selector.select_model("Hi there")
-    assert result.model == "ollama/gemma2:2b"
+    assert result.model == TOPIC_TO_MODEL["simple"]["anthropic"]
     assert "Short/simple prompt" in result.rationale
 
 def test_heuristics_medium_complexity(heuristics_selector):
     medium_prompt = "Write a summary of this paragraph that talks about various topics"
     result = heuristics_selector.select_model(medium_prompt)
-    assert result.model == "ollama/phi3:latest"
+    assert result.model == TOPIC_TO_MODEL["general"]["anthropic"]
     assert "Medium complexity" in result.rationale
 
 def test_heuristics_long_complex(heuristics_selector):
     long_prompt = " ".join(["complex"] * 100)
     result = heuristics_selector.select_model(long_prompt)
-    assert result.model == "ollama/mistral:7b"
+    assert result.model == TOPIC_TO_MODEL["complex"]["anthropic"]
     assert "Long/complex prompt" in result.rationale
 
 # Error handling test for HeuristicsSelector

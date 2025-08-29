@@ -19,7 +19,7 @@ def main() -> None:
         HFZeroShotSelector(provider_name="openai"),
         SLMSelector(provider_name="openai"),
     ]
-    council = ParallelCouncil(selectors=selectors)
+    council = ParallelCouncil(selectors=selectors, provider_name="openai")
 
     # Check if Path is valid
     if not Path(ENV_PATH).exists():

@@ -41,7 +41,7 @@ class HFZeroShotSelector:
         if resp.status_code != 200:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["general"][self.provider_name],
+                model=TOPIC_TO_MODEL["simple"][self.provider_name],
                 rationale=f"HF API error status {resp.status_code}",
             )
 
@@ -51,7 +51,7 @@ class HFZeroShotSelector:
             logger.exception("HFZeroShotSelector JSON parse error")
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["general"][self.provider_name],
+                model=TOPIC_TO_MODEL["simple"][self.provider_name],
                 rationale="Invalid JSON from HF API",
             )
 
@@ -59,7 +59,7 @@ class HFZeroShotSelector:
             top_label = result["labels"][0]
             provider_models = TOPIC_TO_MODEL.get(top_label, {})
             mapped_model = provider_models.get(
-                self.provider_name, TOPIC_TO_MODEL["general"][self.provider_name]
+                self.provider_name, TOPIC_TO_MODEL["simple"][self.provider_name]
             )
             return SelectorVote(
                 selector_name=self.__class__.__name__,
@@ -69,6 +69,6 @@ class HFZeroShotSelector:
 
         return SelectorVote(
             selector_name=self.__class__.__name__,
-            model=TOPIC_TO_MODEL["general"][self.provider_name],
+            model=TOPIC_TO_MODEL["simple"][self.provider_name],
             rationale="Fallback default model",
         )

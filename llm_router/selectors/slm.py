@@ -42,7 +42,7 @@ class SLMSelector:
         selection = resp.content.strip()
         allowed_models = [m[self.provider_name] for m in TOPIC_TO_MODEL.values()]
         if selection not in allowed_models:
-            selection = TOPIC_TO_MODEL["general"][self.provider_name]
+            selection = TOPIC_TO_MODEL["simple"][self.provider_name]
 
         return SelectorVote(
             selector_name=self.__class__.__name__,
