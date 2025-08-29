@@ -24,10 +24,34 @@ def get_hf_headers() -> Dict[str, str]:
 # Router configs
 CANDIDATE_LABELS = ["simple", "general", "complex", "code", "math"]
 
+# Mapping from topic to model names for each provider.
+#
+# These values should correspond to model identifiers accepted by the
+# respective provider implementations (e.g., via LiteLLM).
 TOPIC_TO_MODEL = {
-    "simple": "ollama/gemma2:2b",
-    "general": "ollama/phi3:latest",
-    "complex": "ollama/mistral:7b",
-    "code": "ollama/qwen2.5-coder:latest",
-    "math": "ollama/qwen2-math:latest",
+    "simple": {
+        "anthropic": "claude-3-haiku-20240307",
+        "openai": "gpt-3.5-turbo",
+        "google": "gemini-1.5-flash",
+    },
+    "general": {
+        "anthropic": "claude-3-sonnet-20240229",
+        "openai": "gpt-4o-mini",
+        "google": "gemini-1.5-pro",
+    },
+    "complex": {
+        "anthropic": "claude-3-opus-20240229",
+        "openai": "gpt-4o",
+        "google": "gemini-1.5-pro",
+    },
+    "code": {
+        "anthropic": "claude-3-sonnet-20240229",
+        "openai": "gpt-4o-mini",
+        "google": "gemini-1.5-pro",
+    },
+    "math": {
+        "anthropic": "claude-3-haiku-20240307",
+        "openai": "gpt-4o-mini",
+        "google": "gemini-1.5-pro",
+    },
 }
