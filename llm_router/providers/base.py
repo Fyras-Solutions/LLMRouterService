@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from llm_router.schemas.env_validator import EnvVarError
 
@@ -14,8 +14,7 @@ from llm_router.schemas.env_validator import EnvVarError
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ProviderResponse:
+class ProviderResponse(BaseModel):
     """Standard response returned from a provider."""
 
     text: str
@@ -38,7 +37,12 @@ class Provider(ABC):
     def __init__(self, env_path: Path | None = None) -> None:
         self.env_path = env_path
         if env_path:
-            load_dotenv(env_path)
+            if not env_path.exists():
+                raise EnvVarError(f"Environment file not found at {env_path}")
+            if not load_dotenv(env_path):
+                raise EnvVarError(
+                    f"Unable to load environment variables from {env_path}"
+                )
         key = os.getenv(self.api_key_env)
         if not key:
             raise EnvVarError(

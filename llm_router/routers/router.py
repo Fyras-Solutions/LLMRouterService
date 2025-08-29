@@ -11,7 +11,11 @@ from llm_router.schemas.council_schemas import (
     LLMRouterResponse,
     RouterMetadata,
 )
-from llm_router.exceptions.exceptions import ModelExecutionError, RouterError
+from llm_router.exceptions.exceptions import (
+    ModelExecutionError,
+    RouterError,
+    ProviderError,
+)
 from llm_router.schemas.env_validator import validate_env_vars, get_env_var
 from llm_router.providers import Provider, AnthropicProvider
 from typing import Optional
@@ -60,16 +64,20 @@ class LLMRouterService:
             start = time.time()
             resp = self.provider.complete(model=model, prompt=prompt)
             end = time.time()
-        except Exception as exc:  # pragma: no cover - network issues
+        except ProviderError as exc:  # pragma: no cover - network issues
             logger.exception("Model execution failed")
             raise ModelExecutionError(str(exc)) from exc
 
         # Cost tracking handled by provider
-        cost = self.provider.get_cost(
-            model=model,
-            prompt_tokens=resp.prompt_tokens,
-            completion_tokens=resp.completion_tokens,
-        )
+        try:
+            cost = self.provider.get_cost(
+                model=model,
+                prompt_tokens=resp.prompt_tokens,
+                completion_tokens=resp.completion_tokens,
+            )
+        except ProviderError as exc:  # pragma: no cover - cost issues shouldn't block
+            logger.warning("Cost calculation failed: %s", exc)
+            cost = 0.0
 
         response_text = resp.text
 

@@ -13,6 +13,9 @@ from llm_router.exceptions.exceptions import (
     CouncilError,
     ModelExecutionError,
     RouterError,
+    ProviderError,
+    ProviderCompletionError,
+    ProviderCostError,
 )
 
 __version__ = "0.1.0"
@@ -28,4 +31,7 @@ __all__ = [
     "CouncilError",
     "ModelExecutionError",
     "RouterError",
+    "ProviderError",
+    "ProviderCompletionError",
+    "ProviderCostError",
 ]
