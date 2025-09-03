@@ -1,6 +1,6 @@
 # LLMRouterService
 
-A modular, extensible service for orchestrating and routing requests to multiple Large Language Models (LLMs) using council-based decision logic, selectors, and robust metadata tracking.
+A modular, extensible service for orchestrating and routing requests to multiple Large Language Models (LLMs) using council-based decision logic, selectors, and robust metadata tracking. The router supports pluggable providers (Anthropic, OpenAI, Google Gemini, etc.) via a common interface.
 
 ## Architecture Overview
 
@@ -37,13 +37,13 @@ graph TD
 ### Routers (`llm_router/routers/`)
 - **Purpose:** Main service interface for routing requests, executing LLM calls, and logging.
 - **Files:**
-  - `router.py`: Router service with PromptLayer logging.
+  - `router.py`: Router service with PromptLayer logging and pluggable providers.
 
 ### Schemas (`llm_router/schemas/`)
 - **Purpose:** Define data contracts for council decisions, LLM responses, and metadata.
 - **Files:**
   - `council_schemas.py`: Main schemas for responses and decisions.
-  - `abstractions.py`, `config.py`: Abstract base classes and configuration schemas.
+  - `abstractions.py`, `config.py`: Abstract base classes and configuration schemas. `config.py` also contains a centralized mapping of topic labels to provider-specific model names.
 
 ### Exceptions (`llm_router/exceptions/`)
 - **Purpose:** Custom exception handling for router and council logic.
@@ -126,13 +126,23 @@ class CouncilDecision(BaseModel):
    pip install -e .
    ```
 2. **Configure environment:**
-   - Set your LLM API keys in `.env`.
+   - Set your API keys in `.env`:
+     - `PROMPTLAYER_API_KEY`
+     - `HF_API_KEY`
+     - Provider specific key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`)
 3. **Run the service:**
-   - Call `LLMRouterService.invoke` with your prompt to route and execute a request.
+   - Instantiate a provider and pass it to the router:
+     ```python
+     from llm_router.providers import OpenAIProvider
+     provider = OpenAIProvider(env_path=".env")
+     router = LLMRouterService(council=my_council, provider=provider, env_path=".env")
+     response = router.invoke("What is the capital of France?")
+     ```
    - Progress bars are displayed via `tqdm` and logging is emitted with Python's `logging` module.
 
 ## Extending
 - Add new selectors or councils by implementing the appropriate base classes in `schemas/abstractions.py`.
+- Implement additional providers by extending `providers.base.Provider`.
 - Customize routing logic in `routers/router.py`.
 
 ## Testing

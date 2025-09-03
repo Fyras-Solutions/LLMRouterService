@@ -37,3 +37,24 @@ class RouterError(LLMRouterError):
     """Raised when the router fails to aggregate votes or return a decision."""
     def __init__(self, message: str, selectors: list = None, **kwargs):
         super().__init__(message, selectors=selectors, **kwargs)
+
+
+class ProviderError(LLMRouterError):
+    """Base class for provider-related failures."""
+
+    def __init__(self, message: str, provider: str | None = None, **kwargs):
+        super().__init__(message, provider=provider, **kwargs)
+
+
+class ProviderCompletionError(ProviderError):
+    """Raised when a provider completion call fails."""
+
+    def __init__(self, message: str, model: str | None = None, **kwargs):
+        super().__init__(message, model=model, **kwargs)
+
+
+class ProviderCostError(ProviderError):
+    """Raised when a provider cost calculation fails."""
+
+    def __init__(self, message: str, model: str | None = None, **kwargs):
+        super().__init__(message, model=model, **kwargs)
