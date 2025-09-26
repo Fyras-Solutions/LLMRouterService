@@ -1,4 +1,4 @@
-import logging
+import logging,time
 
 import tiktoken
 from textstat import textstat
@@ -20,35 +20,53 @@ class HeuristicsSelector:
         enc = tiktoken.get_encoding("cl100k_base")
         num_tokens = len(enc.encode(prompt))
         readability = textstat.flesch_kincaid_grade(prompt)
-
-        if any(x in prompt.lower() for x in ["code", "python", "function", "class"]):
+        
+        if any(x in prompt.lower() for x in ["programming","code","coding","debugging","data-structures","scripting","git","api","database","python","java","javascript","c++","c#","typescript","query","database"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["code"][self.provider_name],
-                rationale="Keyword match: code-related",
+                model=TOPIC_TO_MODEL["PROGRAMMING"][self.provider_name],
+                rationale="Keyword match: PROGRAMMING-related",
             )
-        if any(x in prompt.lower() for x in ["solve", "integral", "equation", "math"]):
+        if any(x in prompt.lower() for x in ["finance","financial-analysis","investment","stocks","trading","banking","fintech","personal-finance","cryptocurrency","blockchain","accounting","economics","risk-management","portfolio-management","financial-modeling","budgeting","loans","insurance","taxation","wealth-management"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["math"][self.provider_name],
-                rationale="Keyword match: math-related",
+                model=TOPIC_TO_MODEL["FINANCE"][self.provider_name],
+                rationale="Keyword match:FINANCE-related",
             )
-        if num_tokens < 15 and readability < 6:
+        if any(x in prompt.lower() for x in ["technology","tech","innovation","gadgets","blockchain","iot","cybersecurity","cloud-computing","hardware","robotics","virtual-reality","augmented-reality","5g","automation","digital-transformation","mobile","phone","laptop"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["simple"][self.provider_name],
+                model=TOPIC_TO_MODEL["TECHNOLOGY"][self.provider_name],
+                rationale="Keyword match:TECHNOLOGY-related",
+            )
+        if any(x in prompt.lower() for x in ["health","wellness","fitness","nutrition","mental-health","healthcare","medicine","public-health","exercise","disease-prevention","medical-research","health-tech","patient-care","health-education","chronic-disease","health-policy","telemedicine","nutritionist","mental-wellbeing","health-awareness"]):
+            return SelectorVote(
+                selector_name=self.__class__.__name__,
+                model=TOPIC_TO_MODEL["HEALTH"][self.provider_name],
+                rationale="Keyword match:HEALTH-related",
+            )
+        if any(x in prompt.lower() for x in ["entertainment","movie","music","tv-shows","gaming","anime","manga","awards","comedy","pop-culture","serie","film"]):
+            return SelectorVote(
+                selector_name=self.__class__.__name__,
+                model=TOPIC_TO_MODEL["ENTERTAINMENT"][self.provider_name],
+                rationale="Keyword match:ENTERTAINMENT-related",
+            )
+        if num_tokens < 20 and readability < 6:
+            return SelectorVote(
+                selector_name=self.__class__.__name__,
+                model=TOPIC_TO_MODEL["SIMPLE"][self.provider_name],
                 rationale="Short/simple prompt",
             )
-        if num_tokens < 80:
+        if num_tokens > 20 and readability > 6:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
-                model=TOPIC_TO_MODEL["general"][self.provider_name],
-                rationale="Medium complexity",
+                model=TOPIC_TO_MODEL["COMPLEX"][self.provider_name],
+                rationale="COMPLEX complexity",
             )
         return SelectorVote(
             selector_name=self.__class__.__name__,
-            model=TOPIC_TO_MODEL["complex"][self.provider_name],
-            rationale="Long/complex prompt",
+            model=TOPIC_TO_MODEL["GENERAL"][self.provider_name],
+            rationale="GENERAL prompt",
         )
 
     def select_model(self, prompt: str) -> SelectorVote:

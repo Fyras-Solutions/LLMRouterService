@@ -27,7 +27,8 @@ class GoogleProvider(Provider):
 
     def complete(self, model: str, prompt: str) -> ProviderResponse:
         try:
-            resp: Any = completion(model=model, messages=[{"role": "user", "content": prompt}])
+            # resp: Any = completion(model=model, messages=[{"role": "user", "content": prompt}])
+            resp: Any = completion(model="gemini/" + model, messages=[{"role": "user", "content": prompt}])
             text = resp["choices"][0]["message"]["content"]
             usage = getattr(resp, "usage", None)
             prompt_tokens = getattr(usage, "prompt_tokens", 0)

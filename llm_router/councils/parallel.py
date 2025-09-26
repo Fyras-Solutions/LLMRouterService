@@ -22,7 +22,7 @@ class ParallelCouncil(Council):
     ) -> None:
         self.selectors = selectors
         self.provider_name = provider_name
-        self.default_model = default_model or TOPIC_TO_MODEL["simple"][provider_name]
+        self.default_model = default_model or TOPIC_TO_MODEL["SIMPLE"][provider_name]
 
     def decide(self, prompt: str) -> CouncilDecision:
         votes: List[SelectorVote] = []
