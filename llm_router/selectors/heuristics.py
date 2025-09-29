@@ -31,7 +31,7 @@ class HeuristicsSelector:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["FINANCE"][self.provider_name],
-                rationale="Keyword match:FINANCE-related",
+                rationale="Keyword match: FINANCE-related",
             )
         if any(x in prompt.lower() for x in ["technology","tech","innovation","gadgets","blockchain","iot","cybersecurity","cloud-computing","hardware","robotics","virtual-reality","augmented-reality","5g","automation","digital-transformation","mobile","phone","laptop"]):
             return SelectorVote(
