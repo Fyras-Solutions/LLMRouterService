@@ -37,7 +37,7 @@ class HeuristicsSelector:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["TECHNOLOGY"][self.provider_name],
-                rationale="Keyword match:TECHNOLOGY-related",
+                rationale="Keyword match: TECHNOLOGY-related",
             )
         if any(x in prompt.lower() for x in ["health","wellness","fitness","nutrition","mental-health","healthcare","medicine","public-health","exercise","disease-prevention","medical-research","health-tech","patient-care","health-education","chronic-disease","health-policy","telemedicine","nutritionist","mental-wellbeing","health-awareness"]):
             return SelectorVote(
