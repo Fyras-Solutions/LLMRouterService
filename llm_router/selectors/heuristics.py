@@ -49,7 +49,7 @@ class HeuristicsSelector:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["ENTERTAINMENT"][self.provider_name],
-                rationale="Keyword match:ENTERTAINMENT-related",
+                rationale="Keyword match: ENTERTAINMENT-related",
             )
         if num_tokens < 20 and readability < 6:
             return SelectorVote(
