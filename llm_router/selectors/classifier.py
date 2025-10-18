@@ -3,7 +3,7 @@ import logging
 from transformers import pipeline
 from transformers.pipelines.base import PipelineException
 
-from llm_router.schemas.council_schemas import SelectorVote
+from fyras_models import SelectorVote
 from llm_router.schemas.config import CANDIDATE_LABELS, TOPIC_TO_MODEL
 from llm_router.exceptions.exceptions import SelectorError
 

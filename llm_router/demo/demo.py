@@ -3,7 +3,8 @@ from pathlib import Path
 from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.selectors.classifier import HFZeroShotSelector
 from llm_router.routers.router import LLMRouterService
-from llm_router.schemas.council_schemas import LLMRouterResponse
+
+from fyras_models import LLMRouterResponse
 from llm_router.providers import OpenAIProvider, AnthropicProvider,GoogleProvider
 from llm_router.councils import ParallelCouncil,RandomCouncil,CascadeCouncil,WeightedMajorityVoteCouncil,UnanimousCouncil
 

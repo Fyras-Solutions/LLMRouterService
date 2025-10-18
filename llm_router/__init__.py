@@ -1,11 +1,18 @@
 """LLM Router Service for intelligent model selection and routing."""
 
 from llm_router.routers.router import LLMRouterService  # was LLMRouter
-from llm_router.schemas.council_schemas import (
+# from llm_router.schemas.council_schemas import (
+#     LLMResponse,
+#     RouterMetadata,
+#     LLMRouterResponse,
+# )
+
+from fyras_models import(
     LLMResponse,
     RouterMetadata,
-    LLMRouterResponse,
+    LLMRouterResponse
 )
+
 from llm_router.exceptions.exceptions import (
     LLMRouterError,
     UsableModelForPromptError,

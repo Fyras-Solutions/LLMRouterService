@@ -1,9 +1,9 @@
-import logging,time
+import logging
 
 import tiktoken
 from textstat import textstat
 
-from llm_router.schemas.council_schemas import SelectorVote
+from fyras_models import SelectorVote
 from llm_router.schemas.config import TOPIC_TO_MODEL
 from llm_router.exceptions.exceptions import SelectorError
 
@@ -31,25 +31,25 @@ class HeuristicsSelector:
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["FINANCE"][self.provider_name],
-                rationale="Keyword match:FINANCE-related",
+                rationale="Keyword match: FINANCE-related",
             )
         if any(x in prompt.lower() for x in ["technology","tech","innovation","gadgets","blockchain","iot","cybersecurity","cloud-computing","hardware","robotics","virtual-reality","augmented-reality","5g","automation","digital-transformation","mobile","phone","laptop"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["TECHNOLOGY"][self.provider_name],
-                rationale="Keyword match:TECHNOLOGY-related",
+                rationale="Keyword match: TECHNOLOGY-related",
             )
         if any(x in prompt.lower() for x in ["health","wellness","fitness","nutrition","mental-health","healthcare","medicine","public-health","exercise","disease-prevention","medical-research","health-tech","patient-care","health-education","chronic-disease","health-policy","telemedicine","nutritionist","mental-wellbeing","health-awareness"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["HEALTH"][self.provider_name],
-                rationale="Keyword match:HEALTH-related",
+                rationale="Keyword match: HEALTH-related",
             )
         if any(x in prompt.lower() for x in ["entertainment","movie","music","tv-shows","gaming","anime","manga","awards","comedy","pop-culture","serie","film"]):
             return SelectorVote(
                 selector_name=self.__class__.__name__,
                 model=TOPIC_TO_MODEL["ENTERTAINMENT"][self.provider_name],
-                rationale="Keyword match:ENTERTAINMENT-related",
+                rationale="Keyword match: ENTERTAINMENT-related",
             )
         if num_tokens < 20 and readability < 6:
             return SelectorVote(

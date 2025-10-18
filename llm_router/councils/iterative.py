@@ -4,8 +4,9 @@ from typing import List, Dict, Any
 from tqdm import tqdm
 
 from llm_router.schemas.abstractions import Council, Selector
-from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
+from fyras_models import CouncilDecision,SelectorVote
 from llm_router.exceptions.exceptions import CouncilError
+
 
 logger = logging.getLogger(__name__)
 
