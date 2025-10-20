@@ -4,22 +4,6 @@ import os
 
 from typing import Dict
 
-# # Hugging Face API Setup
-# HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
-
-
-# def get_hf_headers() -> Dict[str, str]:
-#     """Build authorization headers for HuggingFace requests.
-
-#     The router validates required environment variables on startup, so here we
-#     simply read the key from the environment without additional checks. If the
-#     key is missing, an empty header is returned and requests will fail upstream,
-#     but importing selectors will not raise errors.
-#     """
-
-#     api_key = os.getenv("HF_API_KEY", "")
-#     return {"Authorization": f"Bearer {api_key}"} if api_key else {}
-
 
 # Router configs
 CANDIDATE_LABELS = ["SIMPLE","COMPLEX","FINANCE","PROGRAMMING","TECHNOLOGY","ENTERTAINMENT","HEALTH"]

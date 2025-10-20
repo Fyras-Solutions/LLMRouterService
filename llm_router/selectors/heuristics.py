@@ -3,7 +3,7 @@ import logging
 import tiktoken
 from textstat import textstat
 
-from llm_router.schemas.council_schemas import SelectorVote
+from fyras_models import SelectorVote
 from llm_router.schemas.config import TOPIC_TO_MODEL
 from llm_router.exceptions.exceptions import SelectorError
 

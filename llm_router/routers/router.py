@@ -6,11 +6,12 @@ import promptlayer
 import threading
 from pathlib import Path
 from llm_router.schemas.abstractions import Council
-from llm_router.schemas.council_schemas import (
+from fyras_models import (
     CouncilDecision,
     LLMRouterResponse,
-    RouterMetadata,
+    RouterMetadata
 )
+
 from llm_router.exceptions.exceptions import (
     ModelExecutionError,
     RouterError,
