@@ -1,12 +1,10 @@
 import logging
 from pathlib import Path
-from llm_router.selectors.heuristics import HeuristicsSelector
 from llm_router.selectors.classifier import HFZeroShotSelector
 from llm_router.routers.router import LLMRouterService
 
 from fyras_models import LLMRouterResponse
 from llm_router.providers import OpenAIProvider, AnthropicProvider,GoogleProvider
-from llm_router.councils import ParallelCouncil,RandomCouncil,CascadeCouncil,WeightedMajorityVoteCouncil,UnanimousCouncil
 
 import time
 # Get the project root directory (2 levels up from this file)
@@ -31,12 +29,7 @@ def main() -> None:
         user_provider = "google" # defalut (if tenant Didn't have that provider it assign google)
         print("Continue with default provider",user_provider) 
          
-    selectors = [
-        HFZeroShotSelector(provider_name=user_provider),
-        HeuristicsSelector(provider_name=user_provider)
-    ]
-    
-    council = RandomCouncil(selectors=selectors)
+    Selector = HFZeroShotSelector(provider_name=user_provider)
     
     # Check if Path is valid
     if not Path(ENV_PATH).exists():
@@ -50,7 +43,7 @@ def main() -> None:
         case "anthropic":
             provider = AnthropicProvider(env_path=ENV_PATH)
     
-    router_service = LLMRouterService(council=council, env_path=ENV_PATH, provider=provider)
+    router_service = LLMRouterService(Selector=Selector, env_path=ENV_PATH, provider=provider)
     
     while True:
         prompt = input("Enter your Prompt:")

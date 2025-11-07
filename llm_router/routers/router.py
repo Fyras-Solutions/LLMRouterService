@@ -5,11 +5,10 @@ import time
 import promptlayer
 import threading
 from pathlib import Path
-from llm_router.schemas.abstractions import Council
+from llm_router.schemas.abstractions import Selector
 from fyras_models import (
-    CouncilDecision,
-    LLMRouterResponse,
-    RouterMetadata
+    SelectorVote,
+    LLMRouterResponse
 )
 
 from llm_router.exceptions.exceptions import (
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 class LLMRouterService:
     def __init__(
         self,
-        council: Council,
+        Selector: Selector,
         api_key: str | None = None,
         env_path: Optional[Path] = None,
         provider: Provider | None = None,
@@ -45,7 +44,7 @@ class LLMRouterService:
         Raises:
             EnvVarError: If required environment variables are missing.
         """
-        self.council = council
+        self.Selector = Selector
         self.provider = provider or AnthropicProvider(env_path=env_path)
 
         # Validate all required environment variables
@@ -57,9 +56,9 @@ class LLMRouterService:
 
         self.pl_client = promptlayer.PromptLayer(api_key=api_key)
 
-    def _execute(self, decision: CouncilDecision, prompt: str) -> LLMRouterResponse:
+    def _execute(self, Selector: SelectorVote, prompt: str) -> LLMRouterResponse:
         """Execute call through provider and log with PromptLayer."""
-        model = decision.final_model
+        model = Selector.model
 
         try:
             start = time.time()
@@ -82,61 +81,18 @@ class LLMRouterService:
 
         response_text = resp.text
 
-        # Build structured I/O for PromptLayer
-        prompt_struct = {
-            "content": [{"type": "text", "text": prompt}],
-            "input_variables": [],
-            "template_format": "f-string",
-            "type": "completion",
-        }
-        response_struct = {
-            "content": [{"type": "text", "text": response_text}],
-            "input_variables": [],
-            "template_format": "f-string",
-            "type": "completion",
-        }
-
-        def log_promptlayer() -> None:
-            try:
-                self.pl_client.log_request(
-                    provider=self.provider.name,
-                    model=model,
-                    input=prompt_struct,
-                    output=response_struct,
-                    request_start_time=start,
-                    request_end_time=end,
-                    parameters={},
-                    tags=["council-router", self.provider.name],
-                    metadata={
-                        "votes": json.dumps([v.model_dump() for v in decision.votes]),
-                        "weighted_results": json.dumps(decision.weighted_results),
-                    },
-                    function_name="LLMRouterService._execute",
-                )
-            except Exception as exc:  # pragma: no cover - logging shouldn't block flow
-                logger.warning("PromptLayer logging failed: %s", exc)
-
-        threading.Thread(target=log_promptlayer, daemon=True).start()
-
-        router_metadata = RouterMetadata(
-            votes=[v.model_dump() for v in decision.votes],
-            weighted_results=decision.weighted_results,
-            tags=["council-router", self.provider.name],
-        )
-
         return LLMRouterResponse(
             model=model,
             prompt=prompt,
             response=response_text,
             cost=cost,
             latency=end - start,
-            metadata=router_metadata,
         )
 
     def invoke(self, prompt: str) -> LLMRouterResponse:
         """Main entry point: ask council to decide, then execute."""
         try:
-            decision = self.council.decide(prompt)
+            decision = self.Selector.select_model(prompt)
         except Exception as exc:  # pragma: no cover - protective
             logger.exception("Council decision failed")
             raise RouterError(str(exc)) from exc
