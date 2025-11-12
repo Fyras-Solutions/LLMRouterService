@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable
 
-from llm_router.schemas.council_schemas import CouncilDecision, SelectorVote
+from fyras_models import CouncilDecision,SelectorVote
 
 
 @runtime_checkable

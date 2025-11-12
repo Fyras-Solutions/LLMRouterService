@@ -28,6 +28,7 @@ langchain-ollama = "*"
 requests = "*"
 pydantic = "*"
 tqdm = "*"
+transformers = "^4.56.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"

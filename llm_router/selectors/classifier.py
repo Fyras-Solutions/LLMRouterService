@@ -1,68 +1,56 @@
 import json
 import logging
-from typing import Any
+from transformers import pipeline
+from transformers.pipelines.base import PipelineException
 
-import requests
-
-from llm_router.schemas.council_schemas import SelectorVote
-from llm_router.schemas.config import (
-    CANDIDATE_LABELS,
-    HF_API_URL,
-    TOPIC_TO_MODEL,
-    get_hf_headers,
-)
+from fyras_models import SelectorVote
+from llm_router.schemas.config import CANDIDATE_LABELS, TOPIC_TO_MODEL
 from llm_router.exceptions.exceptions import SelectorError
 
 logger = logging.getLogger(__name__)
 
 
 class HFZeroShotSelector:
-    """Selector that queries a HuggingFace zero-shot classifier."""
+    """Selector that uses HuggingFace zero-shot classification to choose a model."""
+
+    def __init__(self, provider_name: str = "anthropic") -> None:
+        self.provider_name = provider_name
+        self.model_name = "facebook/bart-large-mnli"
 
     def select_model(self, prompt: str) -> SelectorVote:
-        payload: dict[str, Any] = {
-            "inputs": prompt,
-            "parameters": {"candidate_labels": CANDIDATE_LABELS},
-        }
         try:
-            resp = requests.post(
-                HF_API_URL,
-                headers=get_hf_headers(),
-                json=payload,
-                timeout=30,
-            )
-        except Exception as exc:  # pragma: no cover - network issues
-            logger.exception("HFZeroShotSelector request failed")
-            raise SelectorError(str(exc)) from exc
-
-        if resp.status_code != 200:
-            return SelectorVote(
-                selector_name=self.__class__.__name__,
-                model="ollama/phi3:latest",
-                rationale=f"HF API error status {resp.status_code}",
-            )
+            classifier = pipeline("zero-shot-classification", model=self.model_name)
+        except Exception as exc:
+            logger.exception("Failed to load HF zero-shot model")
+            raise SelectorError("Could not initialize zero-shot classifier") from exc
 
         try:
-            result = resp.json()
-        except (ValueError, json.JSONDecodeError) as exc:
-            logger.exception("HFZeroShotSelector JSON parse error")
-            return SelectorVote(
-                selector_name=self.__class__.__name__,
-                model="ollama/phi3:latest",
-                rationale="Invalid JSON from HF API",
-            )
+            result = classifier(prompt, CANDIDATE_LABELS)
+        except (PipelineException, ValueError, json.JSONDecodeError) as exc:
+            logger.exception("Error during zero-shot classification")
+            return self._fallback_vote("Classification failed or returned invalid JSON")
 
-        if "labels" in result:
-            top_label = result["labels"][0]
-            mapped_model = TOPIC_TO_MODEL.get(top_label, "ollama/phi3:latest")
-            return SelectorVote(
-                selector_name=self.__class__.__name__,
-                model=mapped_model,
-                rationale=f"Zero-shot classified as {top_label}",
-            )
+        labels = result.get("labels")
+        if not labels:
+            logger.warning("Classifier returned no labels")
+            return self._fallback_vote("No labels returned from classifier")
+
+        top_label = labels[0]
+        selected_model = TOPIC_TO_MODEL.get(top_label, {}).get(
+            self.provider_name,
+            TOPIC_TO_MODEL["SIMPLE"][self.provider_name]
+        )
 
         return SelectorVote(
             selector_name=self.__class__.__name__,
-            model="ollama/phi3:latest",
-            rationale="Fallback default model",
+            model=selected_model,
+            rationale=f"Classified as '{top_label}' by zero-shot model"
+        )
+
+    def _fallback_vote(self, reason: str) -> SelectorVote:
+        fallback_model = TOPIC_TO_MODEL["SIMPLE"][self.provider_name]
+        return SelectorVote(
+            selector_name=self.__class__.__name__,
+            model=fallback_model,
+            rationale=reason
         )
